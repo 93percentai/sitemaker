@@ -1,13 +1,14 @@
 [TITLE]: # (Welcome)
 [OVERRIDE]: # (landing.html)
 
-## Latest Posts
+## Example Posts
 
-Check out the blog for deep dives on systems programming, Kubernetes debugging tips, and software engineering opinions.
+Browse the example blog posts to see syntax highlighting, Obsidian callouts, embedded HTML, inline JavaScript, and more — all generated from markdown.
 
-## What You'll Find Here
+## What This Demonstrates
 
-- **Technical deep dives** — thorough explorations of specific technologies
-- **War stories** — lessons learned from production incidents
-- **Tutorials** — step-by-step guides for the tools I use daily
-- **Hot takes** — opinions on industry trends (use at your own risk)
+- **Markdown-it** parsing with wikilinks, callouts, footnotes, and task lists
+- **Tailwind CSS v4** pre-built from templates
+- **highlight.js** syntax highlighting across 190+ languages
+- **Nunjucks** template engine with inheritance and overrides
+- **Cloudflare Pages** ready with auto-generated `_headers`
