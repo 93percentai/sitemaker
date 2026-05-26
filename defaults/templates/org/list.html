@@ -1,61 +1,56 @@
 <!DOCTYPE html>
-<html lang="{{ .Site.Language }}">
+<html lang="{{ site.language }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ .Page.Title }} - {{ .Site.Title }}</title>
-    <meta name="description" content="{{ .Site.Description }}">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-    tailwind.config = {
-        theme: { extend: { colors: { accent: '#2563eb', 'accent-dark': '#1d4ed8' } } }
-    }
-    </script>
-    <link rel="alternate" type="application/rss+xml" title="{{ .Site.Title }}" href="/rss.xml">
+    <title>{{ page.title }} - {{ site.title }}</title>
+    <meta name="description" content="{{ site.description }}">
+    <link rel="stylesheet" href="/assets/css/tailwind.css">
+    <link rel="alternate" type="application/rss+xml" title="{{ site.title }}" href="/rss.xml">
 </head>
 <body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col">
-    {{ template "header" . }}
+    {% include "partials/header.html" %}
 
     <div class="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div class="flex gap-8">
             <aside class="hidden lg:block w-64 shrink-0">
-                {{ template "sidebar" . }}
+                {% include "partials/sidebar.html" %}
             </aside>
 
             <main class="flex-1 min-w-0 bg-white rounded-lg shadow-sm border border-gray-200 p-6 sm:p-8">
-                <h1 class="text-3xl font-bold mb-8">{{ .Page.Title }}</h1>
+                <h1 class="text-3xl font-bold mb-8">{{ page.title }}</h1>
 
-                {{ if .Posts }}
+                {% if posts.length %}
                 <div class="space-y-6">
-                    {{ range .Posts }}
+                    {% for post in posts %}
                     <article class="pb-6 border-b border-gray-100 last:border-0">
                         <div class="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-4">
-                            {{ if .DateStr }}
-                            <time datetime="{{ .DateStr }}" class="text-sm text-gray-400 font-mono shrink-0">{{ .DateStr }}</time>
-                            {{ end }}
+                            {% if post.dateStr %}
+                            <time datetime="{{ post.dateStr }}" class="text-sm text-gray-400 font-mono shrink-0">{{ post.dateStr }}</time>
+                            {% endif %}
                             <div>
                                 <h2 class="text-lg font-semibold">
-                                    <a href="{{ .URL }}" class="text-gray-900 hover:text-accent transition-colors">{{ .Title }}</a>
+                                    <a href="{{ post.url }}" class="text-gray-900 hover:text-blue-600 transition-colors">{{ post.title }}</a>
                                 </h2>
-                                {{ if .Tags }}
+                                {% if post.tags.length %}
                                 <div class="flex gap-2 mt-1">
-                                    {{ range .Tags }}
-                                    <span class="text-xs text-gray-400">#{{ . }}</span>
-                                    {{ end }}
+                                    {% for tag in post.tags %}
+                                    <span class="text-xs text-gray-400">#{{ tag }}</span>
+                                    {% endfor %}
                                 </div>
-                                {{ end }}
+                                {% endif %}
                             </div>
                         </div>
                     </article>
-                    {{ end }}
+                    {% endfor %}
                 </div>
-                {{ else }}
+                {% else %}
                 <p class="text-gray-500">No posts yet.</p>
-                {{ end }}
+                {% endif %}
             </main>
         </div>
     </div>
 
-    {{ template "footer" . }}
+    {% include "partials/footer.html" %}
 </body>
 </html>

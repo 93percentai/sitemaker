@@ -1,9 +1,8 @@
-{{ define "header" }}
 <header class="bg-white border-b border-gray-200">
     <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16">
-            <a href="/" class="text-xl font-bold text-gray-900 hover:text-accent transition-colors">
-                {{ .Site.Title }}
+            <a href="/" class="text-xl font-bold text-gray-900 hover:text-blue-600 transition-colors">
+                {{ site.title }}
             </a>
             <button id="mobile-menu-btn" class="lg:hidden p-2 text-gray-600 hover:text-gray-900" aria-label="Menu">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -11,19 +10,19 @@
                 </svg>
             </button>
             <ul class="hidden lg:flex items-center gap-6">
-                {{ range .Site.Nav }}
-                <li><a href="{{ .URL }}" class="text-gray-600 hover:text-accent transition-colors">{{ .Label }}</a></li>
-                {{ end }}
-                <li><a href="/rss.xml" class="text-gray-400 hover:text-accent transition-colors" title="RSS Feed">
+                {% for item in site.nav %}
+                <li><a href="{{ item.url }}" class="text-gray-600 hover:text-blue-600 transition-colors">{{ item.label }}</a></li>
+                {% endfor %}
+                <li><a href="/rss.xml" class="text-gray-400 hover:text-blue-600 transition-colors" title="RSS Feed">
                     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19 7.38 20 6.18 20C5 20 4 19 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1Z"/></svg>
                 </a></li>
             </ul>
         </div>
         <div id="mobile-menu" class="hidden lg:hidden pb-4">
             <ul class="space-y-2">
-                {{ range .Site.Nav }}
-                <li><a href="{{ .URL }}" class="block py-1 text-gray-600 hover:text-accent">{{ .Label }}</a></li>
-                {{ end }}
+                {% for item in site.nav %}
+                <li><a href="{{ item.url }}" class="block py-1 text-gray-600 hover:text-blue-600">{{ item.label }}</a></li>
+                {% endfor %}
             </ul>
         </div>
     </nav>
@@ -39,4 +38,3 @@
     }
 })();
 </script>
-{{ end }}

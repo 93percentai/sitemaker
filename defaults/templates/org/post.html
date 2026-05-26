@@ -1,28 +1,16 @@
 <!DOCTYPE html>
-<html lang="{{ .Site.Language }}">
+<html lang="{{ site.language }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ .Page.Title }} - {{ .Site.Title }}</title>
-    <meta name="description" content="{{ .Site.Description }}">
-    <meta name="author" content="{{ .Site.Author }}">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-    tailwind.config = {
-        theme: {
-            extend: {
-                colors: {
-                    accent: '#2563eb',
-                    'accent-dark': '#1d4ed8',
-                },
-            },
-        },
-    }
-    </script>
+    <title>{{ page.title }} - {{ site.title }}</title>
+    <meta name="description" content="{{ site.description }}">
+    <meta name="author" content="{{ site.author }}">
+    <link rel="stylesheet" href="/assets/css/tailwind.css">
     <link rel="stylesheet" href="/assets/css/syntax.css">
-    {{ range .Page.CSSAssets }}<link rel="stylesheet" href="{{ . }}">
-    {{ end }}
-    <link rel="alternate" type="application/rss+xml" title="{{ .Site.Title }}" href="/rss.xml">
+    {% for css in page.cssAssets %}<link rel="stylesheet" href="{{ css }}">
+    {% endfor %}
+    <link rel="alternate" type="application/rss+xml" title="{{ site.title }}" href="/rss.xml">
     <style>
         .callout { border-left: 4px solid #2563eb; padding: 1rem; margin: 1.5rem 0; border-radius: 0 0.25rem 0.25rem 0; }
         .callout-title { font-weight: 600; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
@@ -42,76 +30,81 @@
         .callout-todo { border-color: #2563eb; background: #eff6ff; }
         .wikilink { color: #2563eb; text-decoration: underline; text-decoration-style: dotted; }
         .wikilink:hover { text-decoration-style: solid; }
+        .toc-container .toc ul { list-style: none; padding-left: 0; }
+        .toc-container .toc ul ul { padding-left: 0.75rem; }
+        .toc-container .toc li { margin-bottom: 0.25rem; }
+        .toc-container .toc a { color: #6b7280; text-decoration: none; transition: color 0.15s; }
+        .toc-container .toc a:hover { color: #2563eb; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col">
-    {{ template "header" . }}
+    {% if page.hasHeader %}{% include "partials/header.html" %}{% endif %}
 
     <div class="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div class="flex gap-8">
             <aside class="hidden lg:block w-64 shrink-0">
-                {{ template "sidebar" . }}
+                {% include "partials/sidebar.html" %}
             </aside>
 
             <main class="flex-1 min-w-0 bg-white rounded-lg shadow-sm border border-gray-200 p-6 sm:p-8">
                 <article>
                     <header class="mb-8 pb-6 border-b border-gray-200">
-                        <h1 class="text-3xl font-bold text-gray-900 mb-3">{{ .Page.Title }}</h1>
+                        <h1 class="text-3xl font-bold text-gray-900 mb-3">{{ page.title }}</h1>
                         <div class="flex flex-wrap items-center gap-3 text-sm text-gray-500">
-                            {{ if .Page.DateStr }}
-                            <time datetime="{{ .Page.DateStr }}">{{ .Page.DateStr }}</time>
-                            {{ end }}
-                            {{ if .Page.ReadingTime }}
+                            {% if page.dateStr %}
+                            <time datetime="{{ page.dateStr }}">{{ page.dateStr }}</time>
+                            {% endif %}
+                            {% if page.readingTime %}
                             <span>&middot;</span>
-                            <span>{{ .Page.ReadingTime }} min read</span>
-                            {{ end }}
-                            {{ if .Page.Tags }}
+                            <span>{{ page.readingTime }} min read</span>
+                            {% endif %}
+                            {% if page.tags.length %}
                             <span>&middot;</span>
                             <div class="flex gap-2">
-                                {{ range .Page.Tags }}
-                                <a href="/tags/{{ . }}/" class="text-accent hover:underline">#{{ . }}</a>
-                                {{ end }}
+                                {% for tag in page.tags %}
+                                <a href="/tags/{{ tag }}/" class="text-blue-600 hover:underline">#{{ tag }}</a>
+                                {% endfor %}
                             </div>
-                            {{ end }}
+                            {% endif %}
                         </div>
                     </header>
 
-                    {{ if .Page.HasTOC }}
+                    {% if page.hasTOC %}
                     <div class="xl:flex xl:gap-8">
                         <div class="flex-1 min-w-0 prose prose-gray max-w-none">
-                            {{ .Page.HTMLContent }}
+                            {{ page.htmlContent }}
                         </div>
                         <div class="hidden xl:block w-48 shrink-0">
-                            {{ template "toc" . }}
+                            {% include "partials/toc.html" %}
                         </div>
                     </div>
-                    {{ else }}
+                    {% else %}
                     <div class="prose prose-gray max-w-none">
-                        {{ .Page.HTMLContent }}
+                        {{ page.htmlContent }}
                     </div>
-                    {{ end }}
+                    {% endif %}
 
-                    {{ if or .Page.Prev .Page.Next }}
+                    {% if page.prev or page.next %}
                     <nav class="mt-12 pt-8 border-t border-gray-200 flex justify-between">
-                        {{ if .Page.Prev }}
-                        <a href="{{ .Page.Prev.URL }}" class="text-accent hover:underline">
-                            &larr; {{ .Page.Prev.Title }}
+                        {% if page.prev %}
+                        <a href="{{ page.prev.url }}" class="text-blue-600 hover:underline">
+                            &larr; {{ page.prev.title }}
                         </a>
-                        {{ else }}<span></span>{{ end }}
-                        {{ if .Page.Next }}
-                        <a href="{{ .Page.Next.URL }}" class="text-accent hover:underline">
-                            {{ .Page.Next.Title }} &rarr;
+                        {% else %}<span></span>{% endif %}
+                        {% if page.next %}
+                        <a href="{{ page.next.url }}" class="text-blue-600 hover:underline">
+                            {{ page.next.title }} &rarr;
                         </a>
-                        {{ else }}<span></span>{{ end }}
+                        {% else %}<span></span>{% endif %}
                     </nav>
-                    {{ end }}
+                    {% endif %}
                 </article>
             </main>
         </div>
     </div>
 
-    {{ template "footer" . }}
-    {{ range .Page.JSAssets }}<script src="{{ . }}"></script>
-    {{ end }}
+    {% if page.hasFooter %}{% include "partials/footer.html" %}{% endif %}
+    {% for js in page.jsAssets %}<script src="{{ js }}"></script>
+    {% endfor %}
 </body>
 </html>
