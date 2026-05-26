@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="{{ .Site.Language }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ .Page.Title }} - {{ .Site.Title }}</title>
+    <meta name="description" content="{{ .Site.Description }}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+        theme: { extend: { colors: { accent: '#2563eb', 'accent-dark': '#1d4ed8' } } }
+    }
+    </script>
+    <link rel="alternate" type="application/rss+xml" title="{{ .Site.Title }}" href="/rss.xml">
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col">
+    {{ template "header" . }}
+
+    <div class="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="flex gap-8">
+            <aside class="hidden lg:block w-64 shrink-0">
+                {{ template "sidebar" . }}
+            </aside>
+
+            <main class="flex-1 min-w-0 bg-white rounded-lg shadow-sm border border-gray-200 p-6 sm:p-8">
+                <h1 class="text-3xl font-bold mb-8">{{ .Page.Title }}</h1>
+
+                {{ if .Posts }}
+                <div class="space-y-6">
+                    {{ range .Posts }}
+                    <article class="pb-6 border-b border-gray-100 last:border-0">
+                        <div class="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-4">
+                            {{ if .DateStr }}
+                            <time datetime="{{ .DateStr }}" class="text-sm text-gray-400 font-mono shrink-0">{{ .DateStr }}</time>
+                            {{ end }}
+                            <div>
+                                <h2 class="text-lg font-semibold">
+                                    <a href="{{ .URL }}" class="text-gray-900 hover:text-accent transition-colors">{{ .Title }}</a>
+                                </h2>
+                                {{ if .Tags }}
+                                <div class="flex gap-2 mt-1">
+                                    {{ range .Tags }}
+                                    <span class="text-xs text-gray-400">#{{ . }}</span>
+                                    {{ end }}
+                                </div>
+                                {{ end }}
+                            </div>
+                        </div>
+                    </article>
+                    {{ end }}
+                </div>
+                {{ else }}
+                <p class="text-gray-500">No posts yet.</p>
+                {{ end }}
+            </main>
+        </div>
+    </div>
+
+    {{ template "footer" . }}
+</body>
+</html>

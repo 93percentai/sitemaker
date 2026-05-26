@@ -1,0 +1,15 @@
+{{ define "toc" }}
+<div class="sticky top-8">
+    <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">On this page</h3>
+    <div class="toc-container text-sm">
+        {{ .Page.TOCContent }}
+    </div>
+    <style>
+        .toc-container .toc ul { list-style: none; padding-left: 0; }
+        .toc-container .toc ul ul { padding-left: 0.75rem; }
+        .toc-container .toc li { margin-bottom: 0.25rem; }
+        .toc-container .toc a { color: #6b7280; text-decoration: none; transition: color 0.15s; }
+        .toc-container .toc a:hover { color: #2563eb; }
+    </style>
+</div>
+{{ end }}

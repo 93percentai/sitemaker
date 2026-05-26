@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="{{ .Site.Language }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ if .Page.Title }}{{ .Page.Title }} - {{ end }}{{ .Site.Title }}</title>
+    <meta name="description" content="{{ .Site.Description }}">
+    <meta name="author" content="{{ .Site.Author }}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                colors: {
+                    accent: '#2563eb',
+                    'accent-dark': '#1d4ed8',
+                },
+            },
+        },
+    }
+    </script>
+    <link rel="stylesheet" href="/assets/css/syntax.css">
+    {{ range .Page.CSSAssets }}<link rel="stylesheet" href="{{ . }}">
+    {{ end }}
+    <link rel="alternate" type="application/rss+xml" title="{{ .Site.Title }}" href="/rss.xml">
+    <style>
+        .callout { border-left: 4px solid #2563eb; padding: 1rem; margin: 1.5rem 0; border-radius: 0 0.25rem 0.25rem 0; }
+        .callout-title { font-weight: 600; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
+        .callout-icon { font-size: 1.1em; }
+        .callout-note { border-color: #2563eb; background: #eff6ff; }
+        .callout-tip { border-color: #059669; background: #ecfdf5; }
+        .callout-warning { border-color: #d97706; background: #fffbeb; }
+        .callout-danger { border-color: #dc2626; background: #fef2f2; }
+        .callout-info { border-color: #0891b2; background: #ecfeff; }
+        .callout-example { border-color: #7c3aed; background: #f5f3ff; }
+        .callout-quote { border-color: #6b7280; background: #f9fafb; }
+        .callout-bug { border-color: #dc2626; background: #fef2f2; }
+        .callout-success { border-color: #059669; background: #ecfdf5; }
+        .callout-question { border-color: #d97706; background: #fffbeb; }
+        .callout-failure { border-color: #dc2626; background: #fef2f2; }
+        .callout-abstract { border-color: #0891b2; background: #ecfeff; }
+        .callout-todo { border-color: #2563eb; background: #eff6ff; }
+        .wikilink { color: #2563eb; text-decoration: underline; text-decoration-style: dotted; }
+        .wikilink:hover { text-decoration-style: solid; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col">
+    {{ template "header" . }}
+
+    <div class="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="flex gap-8">
+            <aside class="hidden lg:block w-64 shrink-0">
+                {{ template "sidebar" . }}
+            </aside>
+
+            <main class="flex-1 min-w-0 bg-white rounded-lg shadow-sm border border-gray-200 p-6 sm:p-8">
+                {{ if .Page.HasTOC }}
+                <div class="lg:flex lg:gap-8">
+                    <article class="flex-1 min-w-0 prose prose-gray max-w-none">
+                        {{ .Page.HTMLContent }}
+                    </article>
+                    <div class="hidden xl:block w-48 shrink-0">
+                        {{ template "toc" . }}
+                    </div>
+                </div>
+                {{ else }}
+                <article class="prose prose-gray max-w-none">
+                    {{ .Page.HTMLContent }}
+                </article>
+                {{ end }}
+            </main>
+        </div>
+    </div>
+
+    {{ template "footer" . }}
+    {{ range .Page.JSAssets }}<script src="{{ . }}"></script>
+    {{ end }}
+</body>
+</html>
