@@ -1,0 +1,120 @@
+[TITLE]: # (My Kubernetes Debugging Checklist)
+[DATE]: # (2026-04-10)
+[TAGS]: # (kubernetes, devops, debugging)
+[INCLUDES]: # (H, F, TOC)
+[INHERITS]: # (post.html)
+
+# My Kubernetes Debugging Checklist
+
+After three years of running Kubernetes in production, I've developed a mental checklist for debugging issues. Here it is, written down so I stop repeating myself in Slack.
+
+## Step 1: Check Pod Status
+
+Always start here. Most issues are visible in the pod status.
+
+```bash
+kubectl get pods -n <namespace> -o wide
+kubectl describe pod <pod-name> -n <namespace>
+```
+
+Common statuses and what they mean:
+
+| Status | Likely Cause |
+|--------|-------------|
+| `CrashLoopBackOff` | App crashing on startup — check logs |
+| `ImagePullBackOff` | Wrong image tag or registry auth |
+| `Pending` | Insufficient resources or node affinity |
+| `OOMKilled` | Memory limit too low |
+| `ContainerCreating` | Volume mount or init container issue |
+
+## Step 2: Check Logs
+
+```bash
+# Current logs
+kubectl logs <pod-name> -n <namespace>
+
+# Previous crash logs (for CrashLoopBackOff)
+kubectl logs <pod-name> -n <namespace> --previous
+
+# Follow logs in real-time
+kubectl logs -f <pod-name> -n <namespace>
+
+# Logs from a specific container in a multi-container pod
+kubectl logs <pod-name> -c <container-name> -n <namespace>
+```
+
+> [!tip] Stern for Better Logs
+> Use [stern](https://github.com/stern/stern) for tailing logs across multiple pods. It color-codes output by pod name and is invaluable for debugging microservices.
+
+## Step 3: Check Events
+
+Cluster events often reveal issues that logs don't:
+
+```bash
+kubectl get events -n <namespace> --sort-by='.lastTimestamp' | tail -20
+```
+
+> [!warning] Event Retention
+> Kubernetes only retains events for 1 hour by default. If you're debugging something that happened earlier, check your centralized logging.
+
+## Step 4: Resource Pressure
+
+```bash
+# Node resource usage
+kubectl top nodes
+
+# Pod resource usage
+kubectl top pods -n <namespace>
+
+# Check if any nodes are under pressure
+kubectl describe nodes | grep -A5 "Conditions"
+```
+
+> [!danger] Don't Ignore Resource Warnings
+> If you see `MemoryPressure` or `DiskPressure` on a node, pods will be evicted. Address this immediately.
+
+## Step 5: Network Issues
+
+Network debugging in Kubernetes is the worst. Here's my approach:
+
+```bash
+# Check service endpoints
+kubectl get endpoints <service-name> -n <namespace>
+
+# DNS resolution from inside a pod
+kubectl exec -it <pod-name> -- nslookup <service-name>
+
+# Test connectivity
+kubectl exec -it <pod-name> -- curl -v http://<service-name>:<port>/health
+```
+
+> [!info] CoreDNS
+> If DNS resolution fails, check that CoreDNS pods are running: `kubectl get pods -n kube-system -l k8s-app=kube-dns`
+
+## Step 6: Check HPA and Scaling
+
+```bash
+kubectl get hpa -n <namespace>
+kubectl describe hpa <hpa-name> -n <namespace>
+```
+
+Common HPA issues:
+- Metrics server not running
+- Target CPU/memory threshold too low (constant scaling)
+- Min/max replicas misconfigured
+
+## The Nuclear Options
+
+When all else fails:
+
+- [x] Restart the pod: `kubectl delete pod <pod-name>`
+- [x] Rollback the deployment: `kubectl rollout undo deployment/<name>`
+- [ ] Drain and cordon the node (last resort)
+- [ ] Call your cloud provider support (absolute last resort)
+
+> [!quote] Words to Live By
+> "Have you tried turning it off and on again?" — Every SRE, eventually
+
+---
+
+*See also: [[building-a-rate-limiter-in-go|my post on building a rate limiter]] for another production war story.*

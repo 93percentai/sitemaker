@@ -1,0 +1,137 @@
+[TITLE]: # (Building a Production-Grade Rate Limiter in Go)
+[DATE]: # (2026-05-20)
+[TAGS]: # (go, distributed-systems, tutorial)
+[INCLUDES]: # (H, F, TOC)
+[INHERITS]: # (post.html)
+
+# Building a Production-Grade Rate Limiter in Go
+
+Rate limiting is one of those things that sounds simple until you need it to work in a distributed system. I recently built one for our API gateway and learned a few things worth sharing.
+
+## The Problem
+
+Our API serves ~50k requests per second across 12 regions. We needed a rate limiter that:
+
+- Supports per-user and per-endpoint limits
+- Works across multiple instances (distributed)
+- Doesn't add more than 1ms of latency
+- Gracefully degrades if the backing store goes down
+
+## Token Bucket Algorithm
+
+We went with a **token bucket** algorithm. The idea is simple: each user has a "bucket" that fills with tokens at a fixed rate. Each request consumes one token. If the bucket is empty, the request is rejected.
+
+```go
+type TokenBucket struct {
+    mu         sync.Mutex
+    tokens     float64
+    maxTokens  float64
+    refillRate float64 // tokens per second
+    lastRefill time.Time
+}
+
+func (tb *TokenBucket) Allow() bool {
+    tb.mu.Lock()
+    defer tb.mu.Unlock()
+
+    now := time.Now()
+    elapsed := now.Sub(tb.lastRefill).Seconds()
+    tb.tokens = min(tb.maxTokens, tb.tokens+elapsed*tb.refillRate)
+    tb.lastRefill = now
+
+    if tb.tokens >= 1 {
+        tb.tokens--
+        return true
+    }
+    return false
+}
+
+func min(a, b float64) float64 {
+    if a < b {
+        return a
+    }
+    return b
+}
+```
+
+> [!tip] Why Token Bucket?
+> Compared to fixed window counters, token buckets allow short bursts of traffic while still enforcing an average rate. This matches real-world API usage patterns much better.
+
+## Making It Distributed
+
+The single-instance version is easy. The distributed version is where things get interesting. We used Redis with a Lua script for atomic operations:
+
+```lua
+local key = KEYS[1]
+local max_tokens = tonumber(ARGV[1])
+local refill_rate = tonumber(ARGV[2])
+local now = tonumber(ARGV[3])
+
+local bucket = redis.call("HMGET", key, "tokens", "last_refill")
+local tokens = tonumber(bucket[1]) or max_tokens
+local last_refill = tonumber(bucket[2]) or now
+
+local elapsed = now - last_refill
+tokens = math.min(max_tokens, tokens + elapsed * refill_rate)
+
+if tokens >= 1 then
+    tokens = tokens - 1
+    redis.call("HMSET", key, "tokens", tokens, "last_refill", now)
+    redis.call("EXPIRE", key, math.ceil(max_tokens / refill_rate) * 2)
+    return 1
+end
+
+redis.call("HMSET", key, "tokens", tokens, "last_refill", now)
+return 0
+```
+
+> [!warning] Redis Latency
+> Using Redis adds ~0.5ms of latency per request. Make sure your Redis cluster is in the same availability zone as your API servers.
+
+## Graceful Degradation
+
+What happens when Redis goes down? You have two options:
+
+| Strategy | Behavior | Risk |
+|----------|----------|------|
+| **Fail open** | Allow all requests | DDoS vulnerability |
+| **Fail closed** | Reject all requests | Total service outage |
+| **Local fallback** | Use in-memory limiter | Inaccurate limits |
+
+We went with the local fallback approach:
+
+```go
+func (rl *RateLimiter) Allow(userID string) bool {
+    allowed, err := rl.redis.Allow(userID)
+    if err != nil {
+        // Redis is down — fall back to local limiter
+        log.Warn("redis unavailable, using local fallback",
+            "user", userID, "error", err)
+        return rl.local.Allow(userID)
+    }
+    return allowed
+}
+```
+
+> [!note] Monitoring
+> Always track your fallback rate. If you're seeing local fallback activations, something is wrong with your Redis cluster. We alert if fallback rate exceeds 1%.
+
+## Results
+
+After deploying to production:
+
+- [x] P99 latency: 0.8ms (under our 1ms budget)
+- [x] Zero downtime during Redis maintenance windows
+- [x] Correctly handles 50k+ RPS across all regions
+- [ ] Still need to add per-endpoint granularity (planned for Q3)
+
+## Key Takeaways
+
+1. **Start simple** — a local token bucket covers 90% of use cases
+2. **Lua scripts in Redis** are your friend for atomic distributed operations
+3. **Always plan for failure** — your rate limiter shouldn't become a single point of failure
+4. **Measure everything** — especially fallback activation rates
+
+---
+
+*Questions? Reach out on [[about|my contact page]] or open an issue on GitHub.*

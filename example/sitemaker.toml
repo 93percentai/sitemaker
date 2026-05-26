@@ -1,8 +1,8 @@
 [site]
-title = "My Blog"
-description = "A personal blog built with sitemaker"
+title = "The Byte Forge"
+description = "Engineering notes, deep dives, and occasional rants about building software."
 base_url = "/"
-author = "Author Name"
+author = "Dana Kim"
 language = "en"
 
 [[site.nav]]

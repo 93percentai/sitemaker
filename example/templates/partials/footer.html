@@ -1,0 +1,17 @@
+<footer style="background: #1a1a2e; color: #e5e7eb; padding: 2rem 1rem; margin-top: auto;">
+  <div style="max-width: 72rem; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <p style="font-weight: 600; color: white; margin: 0;">{{ site.title }}</p>
+      <p style="font-size: 0.875rem; margin: 0.25rem 0 0 0; opacity: 0.7;">{{ site.description }}</p>
+    </div>
+    <div style="display: flex; gap: 1.5rem; font-size: 0.875rem;">
+      {% for item in site.nav %}
+      <a href="{{ item.url }}" style="color: #93c5fd; text-decoration: none;">{{ item.label }}</a>
+      {% endfor %}
+      <a href="/rss.xml" style="color: #93c5fd; text-decoration: none;">RSS</a>
+    </div>
+  </div>
+  <div style="max-width: 72rem; margin: 1rem auto 0; padding-top: 1rem; border-top: 1px solid #374151; font-size: 0.75rem; color: #6b7280; text-align: center;">
+    &copy; {{ site.year }} {{ site.author }}. Built with <a href="https://github.com/93percentai/sitemaker" style="color: #93c5fd;">sitemaker</a>.
+  </div>
+</footer>

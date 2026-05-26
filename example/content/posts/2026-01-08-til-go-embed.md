@@ -1,0 +1,76 @@
+[TITLE]: # (TIL: Go's embed Package Is More Powerful Than I Thought)
+[DATE]: # (2026-01-08)
+[TAGS]: # (go, til)
+[INCLUDES]: # (H, F)
+[INHERITS]: # (post.html)
+
+# TIL: Go's embed Package Is More Powerful Than I Thought
+
+Today I learned that `go:embed` can do more than just embed single files. Here's a quick rundown of features I didn't know about.
+
+## Embedding Entire Directory Trees
+
+```go
+//go:embed templates
+var templatesFS embed.FS
+```
+
+This embeds the entire `templates/` directory. You can then access files with `fs.ReadFile(templatesFS, "templates/base.html")`.
+
+## Pattern Matching
+
+You can use glob patterns:
+
+```go
+//go:embed static/*.css static/*.js
+var assetsFS embed.FS
+```
+
+## Embedding as a String or Bytes
+
+For single files, you can embed directly as a string or byte slice:
+
+```go
+//go:embed version.txt
+var version string
+
+//go:embed schema.sql
+var schema []byte
+```
+
+No need to read from the filesystem at runtime. The data is compiled into the binary.
+
+## The `all:` Prefix
+
+By default, `go:embed` skips files starting with `.` or `_`. To include them:
+
+```go
+//go:embed all:templates
+var templatesFS embed.FS
+```
+
+This is useful if you have files like `.gitkeep` or `_headers` that you need to embed.
+
+## Real-World Use Case
+
+I used this to build a CLI tool that ships its own default templates — no external files needed. The resolution order is:
+
+1. Check the filesystem for user overrides
+2. Fall back to embedded defaults
+
+```go
+func loadTemplate(name string) ([]byte, error) {
+    // Try user file first
+    if data, err := os.ReadFile(name); err == nil {
+        return data, nil
+    }
+    // Fall back to embedded
+    return fs.ReadFile(embeddedFS, name)
+}
+```
+
+Simple, elegant, and the binary is fully self-contained.
+
+---
+
+*Short post today. Sometimes the best discoveries are the small ones.*

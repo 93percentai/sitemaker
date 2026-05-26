@@ -1,19 +1,20 @@
-[TITLE]: # (Welcome)
+[TITLE]: # (Home)
 [INCLUDES]: # (H, F)
 
-# Welcome to My Blog
+# The Byte Forge
 
-This is a personal blog built with **sitemaker** — a static site generator written in Go.
+Welcome to my corner of the internet. I write about systems programming, distributed systems, and the craft of building reliable software.
 
-## Recent Posts
+## Latest Posts
 
-Check out the [posts](/posts/) section for the latest articles.
+Check out the [latest posts](/posts/) or subscribe via [RSS](/rss.xml).
 
-## Features
+## About Me
 
-- **Obsidian-flavored markdown** with wikilinks, callouts, and more
-- **Syntax highlighting** for code blocks
-- **RSS feed** for subscribers
-- **Fast builds** powered by Go
-- **Tailwind CSS** for clean, responsive design
-- **Cloudflare Pages** ready
+I'm **Dana Kim**, a software engineer working on infrastructure and developer tools. I've spent the last decade building systems that handle millions of requests per second, and I write about what I've learned along the way.
+
+When I'm not coding, you'll find me hiking, reading sci-fi, or tinkering with mechanical keyboards.
+
+---
+
+*Built with [sitemaker](https://github.com/93percentai/sitemaker) and deployed on Cloudflare Pages.*

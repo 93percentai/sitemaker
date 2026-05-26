@@ -1,0 +1,106 @@
+[TITLE]: # (5 PostgreSQL JSONB Pitfalls That Bit Me in Production)
+[DATE]: # (2026-02-14)
+[TAGS]: # (postgres, databases, war-stories)
+[INCLUDES]: # (H, F, TOC)
+[INHERITS]: # (post.html)
+
+# 5 PostgreSQL JSONB Pitfalls That Bit Me in Production
+
+PostgreSQL's JSONB type is incredibly powerful. It's also a footgun factory if you're not careful. Here are five issues I've hit in production, along with the fixes.
+
+## 1. GIN Indexes Don't Help With Nested Key Lookups
+
+I assumed a GIN index on a JSONB column would speed up all queries. Wrong.
+
+```sql
+-- This index...
+CREATE INDEX idx_data ON events USING GIN (data);
+
+-- ...helps with this:
+SELECT * FROM events WHERE data @> '{"type": "click"}';
+
+-- ...but NOT this:
+SELECT * FROM events WHERE data->>'user'->>'email' = 'dana@example.com';
+```
+
+For nested path queries, you need an **expression index**:
+
+```sql
+CREATE INDEX idx_user_email ON events ((data->'user'->>'email'));
+```
+
+> [!warning] Index Size
+> Expression indexes on JSONB can get large quickly. Monitor your index size with `pg_total_relation_size()` and consider partial indexes if the column has high cardinality.
+
+## 2. JSONB Equality Is Tricky
+
+JSONB normalizes whitespace and key order. This means:
+
+```sql
+SELECT '{"a": 1, "b": 2}'::jsonb = '{"b": 2, "a": 1}'::jsonb;
+-- true (keys are reordered)
+
+SELECT '{"a": 1}'::jsonb = '{"a": 1.0}'::jsonb;
+-- false (integer vs numeric)
+```
+
+That second one bit us hard. We were storing prices as both `1` and `1.0` depending on the source, and equality checks were silently failing.
+
+## 3. Missing Keys Return NULL, Not Errors
+
+```sql
+SELECT data->>'nonexistent_key' FROM events;
+-- Returns NULL, no error
+
+SELECT data->'deeply'->'nested'->'path'->>'key' FROM events;
+-- Also returns NULL if any part of the path doesn't exist
+```
+
+> [!danger] Silent Failures
+> This means typos in your JSONB path expressions won't raise errors. Your query will happily return NULL for every row, and you'll wonder why your report shows all zeros.
+
+Use `jsonb_path_exists()` or add `WHERE data ? 'key'` checks.
+
+## 4. UPDATE Replaces, It Doesn't Merge
+
+```sql
+-- You might think this adds a key...
+UPDATE events SET data = '{"new_key": "value"}' WHERE id = 1;
+-- ...but it REPLACES the entire JSONB column!
+
+-- Use jsonb_set() to merge:
+UPDATE events
+SET data = jsonb_set(data, '{new_key}', '"value"')
+WHERE id = 1;
+
+-- Or use the || operator for shallow merge:
+UPDATE events
+SET data = data || '{"new_key": "value"}'::jsonb
+WHERE id = 1;
+```
+
+## 5. JSONB Bloats Your WAL
+
+Every JSONB update writes the **entire column value** to the WAL, not just the changed fields. If you have a 10KB JSONB document and change one field, that's 10KB of WAL.
+
+For tables with frequent small updates to large JSONB documents, this can:
+- Explode your WAL volume
+- Slow down replication
+- Fill up your disk
+
+> [!tip] Mitigation Strategy
+> If you're doing frequent partial updates, consider breaking the JSONB into a separate table with smaller documents, or use regular columns for frequently-updated fields.
+
+## Summary Table
+
+| Pitfall | Severity | Fix |
+|---------|----------|-----|
+| GIN index limitations | Medium | Expression indexes |
+| Equality quirks | High | Normalize numeric types |
+| Silent NULL returns | High | Explicit existence checks |
+| UPDATE replaces all | Critical | Use `jsonb_set()` or `\|\|` |
+| WAL bloat | High | Normalize hot fields |
+
+---
+
+*Have your own JSONB war stories? I'd love to hear them.*

@@ -1,0 +1,94 @@
+[TITLE]: # (Custom Templates and Footer Overrides)
+[DATE]: # (2026-05-12)
+[TAGS]: # (tutorial, templates)
+[INCLUDES]: # (H, F, TOC)
+[INHERITS]: # (post.html)
+
+# Custom Templates and Footer Overrides
+
+Sitemaker lets you override any template by placing a file with the same name in your project's `templates/` directory. Here's how to customize the footer and other components.
+
+## Overriding the Footer
+
+Create `templates/partials/footer.html` in your project:
+
+```html
+<footer style="background: #1a1a2e; color: #e5e7eb; padding: 3rem 1rem;">
+  <div style="max-width: 72rem; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem;">
+    <div>
+      <h3 style="color: white; margin-bottom: 1rem;">{{ site.title }}</h3>
+      <p style="font-size: 0.875rem;">{{ site.description }}</p>
+    </div>
+    <div>
+      <h3 style="color: white; margin-bottom: 1rem;">Links</h3>
+      <ul style="list-style: none; padding: 0;">
+        {% for item in site.nav %}
+        <li><a href="{{ item.url }}" style="color: #93c5fd;">{{ item.label }}</a></li>
+        {% endfor %}
+      </ul>
+    </div>
+    <div>
+      <h3 style="color: white; margin-bottom: 1rem;">Subscribe</h3>
+      <p style="font-size: 0.875rem;">Get updates via <a href="/rss.xml" style="color: #93c5fd;">RSS</a>.</p>
+    </div>
+  </div>
+</footer>
+```
+
+Sitemaker's template resolution order:
+
+1. **Your project's** `templates/` directory (highest priority)
+2. **Built-in** template for the selected theme (`personal` or `org`)
+3. **Built-in** shared partials
+
+## Overriding the Full Page Layout
+
+For a completely custom page (landing page, portfolio, etc.), use `OVERRIDE`:
+
+```markdown
+[TITLE]: # (Landing Page)
+[OVERRIDE]: # (landing.html)
+```
+
+Then create `templates/landing.html`:
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <title>{{ page.title }} - {{ site.title }}</title>
+  <link rel="stylesheet" href="/assets/css/tailwind.css">
+</head>
+<body>
+  <!-- Complete control over the HTML -->
+  <h1>{{ site.title }}</h1>
+  <p>{{ site.description }}</p>
+  {{ page.htmlContent }}
+</body>
+</html>
+```
+
+The override template receives the same data context (`site`, `page`) as regular templates but controls the entire HTML document.
+
+## Template Variables Reference
+
+All templates have access to:
+
+| Variable | Type | Description |
+|----------|------|-------------|
+| `site.title` | string | Site title from config |
+| `site.description` | string | Site description |
+| `site.author` | string | Author name |
+| `site.nav` | array | Nav items with `.label` and `.url` |
+| `site.year` | number | Current year |
+| `page.title` | string | Page title |
+| `page.htmlContent` | HTML | Rendered markdown |
+| `page.tocContent` | HTML | Table of contents |
+| `page.dateStr` | string | Formatted date |
+| `page.tags` | array | Tag list |
+| `page.readingTime` | number | Minutes to read |
+| `page.prev` / `page.next` | object | Adjacent posts |
+| `posts` | array | Post list (on list pages) |
+
+> [!tip] Nunjucks Syntax
+> Templates use [Nunjucks](https://mozilla.github.io/nunjucks/) — a Jinja2-style template engine. Use `{% if %}`, `{% for %}`, `{{ variable }}`, and `{{ value | filter }}`.

@@ -57,7 +57,7 @@ function calloutPlugin(md: MarkdownIt): void {
       return self.renderToken(tokens, idx, options);
     };
 
-  const CALLOUT_RE = /^\[!(\w+)\]\s*(.*)?$/;
+  const CALLOUT_RE = /^\[!(\w+)\]\s*(.*)?$/m;
   const ICONS: Record<string, string> = {
     note: "&#9998;",
     tip: "&#128161;",
@@ -153,6 +153,27 @@ function findMatchingOpen(tokens: any[], closeIdx: number): number {
   return -1;
 }
 
+function headingAnchorPlugin(md: MarkdownIt): void {
+  md.core.ruler.push("heading_anchors", (state) => {
+    const tokens = state.tokens;
+    for (let i = 0; i < tokens.length; i++) {
+      if (tokens[i].type === "heading_open") {
+        const inlineToken = tokens[i + 1];
+        if (inlineToken && inlineToken.type === "inline") {
+          const text = inlineToken.content;
+          const id = text
+            .toLowerCase()
+            .replace(/[^\w\s-]/g, "")
+            .replace(/\s+/g, "-")
+            .replace(/-+/g, "-")
+            .trim();
+          tokens[i].attrSet("id", id);
+        }
+      }
+    }
+  });
+}
+
 export function createRenderer(): MarkdownIt {
   const md = new MarkdownIt({
     html: true,
@@ -173,6 +194,7 @@ export function createRenderer(): MarkdownIt {
 
   md.use(footnotePlugin);
   md.use(taskListPlugin, { enabled: true, label: true });
+  headingAnchorPlugin(md);
   wikilinkPlugin(md);
   calloutPlugin(md);
 
